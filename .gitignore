@@ -1,0 +1,46 @@
+# Dependencies
+**/node_modules/
+**/pnpm-lock.yaml
+**/package-lock.json
+**/yarn.lock
+
+# Environment variables
+**/.env
+!**/.env.example
+
+# Secrets
+**/secrets.yaml
+**/01-secrets.yaml
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.Python
+**/venv/
+**/env/
+**/.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+**/dist/
+**/build/
+**/.cache/
+
+# Logs
+**/*.log
+**/logs/
+
+# Git
+**/.git/

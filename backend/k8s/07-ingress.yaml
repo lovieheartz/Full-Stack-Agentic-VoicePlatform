@@ -1,0 +1,52 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alstalk-ingress
+  namespace: alstalk-backend
+  annotations:
+    # AWS ALB Ingress Controller annotations
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    # Redirect HTTP to HTTPS
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # SSL Certificate ARN - Replace with your certificate ARN
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:REGION:ACCOUNT_ID:certificate/CERTIFICATE_ID
+    # CORS settings
+    alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+spec:
+  rules:
+  - host: api.your-domain.com  # Replace with your domain
+    http:
+      paths:
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-user-service
+            port:
+              number: 8001
+      - path: /ai-call
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-call-service
+            port:
+              number: 8002
+      - path: /campaigns
+        pathType: Prefix
+        backend:
+          service:
+            name: campaign-leads-service
+            port:
+              number: 8003
+      - path: /integrations
+        pathType: Prefix
+        backend:
+          service:
+            name: integrations-service
+            port:
+              number: 8004

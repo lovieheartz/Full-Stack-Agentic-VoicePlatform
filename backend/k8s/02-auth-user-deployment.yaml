@@ -1,0 +1,159 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-user-service
+  namespace: alstalk-backend
+  labels:
+    app: auth-user-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-user-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: auth-user-service
+        version: v1
+    spec:
+      containers:
+      - name: auth-user-service
+        image: <YOUR_ECR_REGISTRY>/auth-user-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8001
+          name: http
+          protocol: TCP
+        env:
+        - name: PROJECT_NAME
+          value: "auth-user-service"
+        - name: PORT
+          value: "8001"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: alstalk-secrets
+              key: DATABASE_URL
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: alstalk-secrets
+              key: SECRET_KEY
+        - name: ALGORITHM
+          valueFrom:
+            secretKeyRef:
+              name: alstalk-secrets
+              key: ALGORITHM
+        - name: ACCESS_TOKEN_EXPIRE_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: alstalk-config
+              key: ACCESS_TOKEN_EXPIRE_MINUTES
+        - name: REFRESH_TOKEN_EXPIRE_DAYS
+          valueFrom:
+            configMapKeyRef:
+              name: alstalk-config
+              key: REFRESH_TOKEN_EXPIRE_DAYS
+        - name: SMTP_HOST
+          valueFrom:
+            secretKeyRef:
+              name: alstalk-secrets
+              key: SMTP_HOST
+        - name: SMTP_PORT
+          valueFrom:
+            secretKeyRef:
+              name: alstalk-secrets
+              key: SMTP_PORT
+        - name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: alstalk-secrets
+              key: SMTP_USER
+        - name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: alstalk-secrets
+              key: SMTP_PASSWORD
+        - name: SMTP_FROM_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: alstalk-secrets
+              key: SMTP_FROM_EMAIL
+        - name: SMTP_FROM_NAME
+          valueFrom:
+            secretKeyRef:
+              name: alstalk-secrets
+              key: SMTP_FROM_NAME
+        - name: OTP_EXPIRE_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: alstalk-config
+              key: OTP_EXPIRE_MINUTES
+        - name: OTP_LENGTH
+          valueFrom:
+            configMapKeyRef:
+              name: alstalk-config
+              key: OTP_LENGTH
+        - name: ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: alstalk-config
+              key: ALLOWED_ORIGINS
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: alstalk-config
+              key: FRONTEND_URL
+        - name: ADMIN_EMAIL
+          valueFrom:
+            configMapKeyRef:
+              name: alstalk-config
+              key: ADMIN_EMAIL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-user-service
+  namespace: alstalk-backend
+  labels:
+    app: auth-user-service
+spec:
+  type: ClusterIP
+  selector:
+    app: auth-user-service
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8001
+    targetPort: 8001
+  sessionAffinity: None

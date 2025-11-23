@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-gateway
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - auth-user-service
+      - ai-call-service
+      - campaign-leads-service
+      - integrations-service
+      - mcp-server
+    restart: unless-stopped
+
+  auth-user-service:
+    build: ./auth-user-service
+    container_name: auth-user-service
+    expose:
+      - "8001"
+    env_file:
+      - ./auth-user-service/.env
+    volumes:
+      - ./auth-user-service:/app
+    restart: unless-stopped
+
+  ai-call-service:
+    build: ./ai-call-service
+    container_name: ai-call-service
+    expose:
+      - "8002"
+    env_file:
+      - ./ai-call-service/.env
+    volumes:
+      - ./ai-call-service:/app
+    depends_on:
+      - auth-user-service
+    restart: unless-stopped
+
+  campaign-leads-service:
+    build: ./campaign-leads-service
+    container_name: campaign-leads-service
+    expose:
+      - "8003"
+    env_file:
+      - ./campaign-leads-service/.env
+    volumes:
+      - ./campaign-leads-service:/app
+    depends_on:
+      - auth-user-service
+    restart: unless-stopped
+
+  integrations-service:
+    build: ./integrations-service
+    container_name: integrations-service
+    expose:
+      - "8004"
+    env_file:
+      - ./integrations-service/.env
+    volumes:
+      - ./integrations-service:/app
+    depends_on:
+      - auth-user-service
+    restart: unless-stopped
+
+  mcp-server:
+    build: ./mcp-server
+    container_name: mcp-server
+    expose:
+      - "8089"
+    env_file:
+      - ./mcp-server/.env
+    volumes:
+      - ./mcp-server:/app
+    depends_on:
+      - integrations-service
+    restart: unless-stopped
+
+  ai-call-agent-worker:
+    build: ./ai-call-service
+    container_name: ai-call-agent-worker
+    command: python agents/outbound_agent.py dev
+    env_file:
+      - ./ai-call-service/.env
+    volumes:
+      - ./ai-call-service:/app
+    depends_on:
+      - ai-call-service
+    restart: unless-stopped
+
+  inbound-agent-worker:
+    build: ./ai-call-service
+    container_name: inbound-agent-worker
+    command: python agents/inbound_agent.py dev
+    env_file:
+      - ./ai-call-service/.env
+    volumes:
+      - ./ai-call-service:/app
+    depends_on:
+      - ai-call-service
+    restart: unless-stopped
